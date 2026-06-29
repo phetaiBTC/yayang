@@ -1,0 +1,210 @@
+<script setup lang="ts">
+import { ref, computed, onMounted } from 'vue';
+import { useToast } from 'primevue/usetoast';
+import Select from 'primevue/select';
+import DatePicker from 'primevue/datepicker';
+import Button from 'primevue/button';
+import DataTable from 'primevue/datatable';
+import Column from 'primevue/column';
+import Chart from 'primevue/chart';
+import {
+  reportRegistration,
+  reportPurchaseOrders,
+  reportImports,
+  reportSales,
+  reportReservations,
+  reportBestSellers,
+} from '../api/reports';
+
+interface ColDef {
+  field: string;
+  header: string;
+  kind?: 'date';
+}
+interface ReportDef {
+  label: string;
+  columns: ColDef[];
+  chart?: boolean;
+  fetch: (from?: string, to?: string) => Promise<any>;
+}
+
+const toast = useToast();
+
+const REPORTS: Record<string, ReportDef> = {
+  registration: {
+    label: 'Registration',
+    columns: [
+      { field: 'cusId', header: 'ID' },
+      { field: 'name', header: 'Name' },
+      { field: 'phone', header: 'Phone' },
+      { field: 'otpVerified', header: 'OTP verified' },
+      { field: 'createdAt', header: 'Registered', kind: 'date' },
+    ],
+    fetch: reportRegistration,
+  },
+  'purchase-orders': {
+    label: 'Purchase Orders',
+    columns: [
+      { field: 'poId', header: 'PO #' },
+      { field: 'supplier.supName', header: 'Supplier' },
+      { field: 'orderDate', header: 'Date', kind: 'date' },
+      { field: 'status', header: 'Status' },
+      { field: 'lineCount', header: 'Lines' },
+      { field: 'totalCost', header: 'Total cost' },
+    ],
+    fetch: reportPurchaseOrders,
+  },
+  imports: {
+    label: 'Imports',
+    columns: [
+      { field: 'importId', header: 'Import #' },
+      { field: 'order.poId', header: 'PO #' },
+      { field: 'importDate', header: 'Date', kind: 'date' },
+      { field: 'lineCount', header: 'Lines' },
+      { field: 'totalQty', header: 'Total qty' },
+    ],
+    fetch: reportImports,
+  },
+  sales: {
+    label: 'Sales',
+    columns: [
+      { field: 'saleId', header: 'Sale #' },
+      { field: 'customer.name', header: 'Customer' },
+      { field: 'saleDate', header: 'Date', kind: 'date' },
+      { field: 'paymentMethod', header: 'Payment' },
+      { field: 'lineCount', header: 'Lines' },
+      { field: 'total', header: 'Total' },
+    ],
+    fetch: reportSales,
+  },
+  reservations: {
+    label: 'Reservations',
+    columns: [
+      { field: 'resId', header: '#' },
+      { field: 'customer.name', header: 'Customer' },
+      { field: 'resDate', header: 'Date', kind: 'date' },
+      { field: 'status', header: 'Status' },
+      { field: 'deposit', header: 'Deposit' },
+      { field: 'total', header: 'Total' },
+      { field: 'balance', header: 'Balance' },
+    ],
+    fetch: reportReservations,
+  },
+  'best-sellers': {
+    label: 'Best Sellers',
+    chart: true,
+    columns: [
+      { field: 'title', header: 'Book' },
+      { field: 'totalQty', header: 'Qty sold' },
+      { field: 'totalRevenue', header: 'Revenue' },
+    ],
+    fetch: reportBestSellers,
+  },
+};
+
+const reportOptions = Object.entries(REPORTS).map(([value, r]) => ({ label: r.label, value }));
+
+const selected = ref<string>('sales');
+const fromDate = ref<Date | null>(null);
+const toDate = ref<Date | null>(null);
+const rows = ref<any[]>([]);
+const summary = ref<Record<string, any>>({});
+const loading = ref(false);
+
+const def = computed(() => REPORTS[selected.value]);
+const summaryText = computed(() =>
+  Object.entries(summary.value)
+    .map(([k, v]) => `${k}: ${v}`)
+    .join('  ·  '),
+);
+const chartData = computed(() => ({
+  labels: rows.value.map((r) => r.title),
+  datasets: [{ label: 'Qty sold', data: rows.value.map((r) => r.totalQty), backgroundColor: '#42A5F5' }],
+}));
+const chartOptions = { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } };
+
+function toYmd(d: Date | null): string | undefined {
+  if (!d) return undefined;
+  const z = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${z(d.getMonth() + 1)}-${z(d.getDate())}`;
+}
+function resolve(obj: any, path: string): any {
+  return path.split('.').reduce((o, k) => (o == null ? o : o[k]), obj);
+}
+function fmtDate(iso: string): string {
+  return iso ? new Date(iso).toLocaleString() : '';
+}
+function cell(data: any, col: ColDef): string {
+  const v = resolve(data, col.field);
+  return col.kind === 'date' ? fmtDate(v) : v == null ? '' : String(v);
+}
+
+async function run() {
+  loading.value = true;
+  try {
+    const data = await def.value.fetch(toYmd(fromDate.value), toYmd(toDate.value));
+    if (Array.isArray(data)) {
+      rows.value = data;
+      const totalQty = data.reduce((s: number, r: any) => s + r.totalQty, 0);
+      summary.value = { books: data.length, totalQtySold: totalQty };
+    } else {
+      rows.value = data.rows;
+      summary.value = data.summary;
+    }
+  } catch (e: any) {
+    const m = e?.response?.data?.message ?? e?.message ?? 'Error';
+    toast.add({ severity: 'error', summary: 'Report failed', detail: Array.isArray(m) ? m.join(', ') : m, life: 4000 });
+  } finally {
+    loading.value = false;
+  }
+}
+
+onMounted(run);
+</script>
+
+<template>
+  <div>
+    <h2 class="mt-0">Reports</h2>
+
+    <div class="filters">
+      <Select v-model="selected" :options="reportOptions" optionLabel="label" optionValue="value" @change="run" />
+      <DatePicker v-model="fromDate" dateFormat="yy-mm-dd" placeholder="From" showButtonBar />
+      <DatePicker v-model="toDate" dateFormat="yy-mm-dd" placeholder="To" showButtonBar />
+      <Button label="Run" icon="pi pi-search" :loading="loading" @click="run" />
+    </div>
+
+    <p v-if="summaryText" class="summary">{{ summaryText }}</p>
+
+    <Chart
+      v-if="def.chart && rows.length"
+      type="bar"
+      :data="chartData"
+      :options="chartOptions"
+      class="chart"
+    />
+
+    <DataTable :value="rows" :loading="loading" paginator :rows="10" stripedRows class="mt-3">
+      <Column v-for="col in def.columns" :key="col.field" :header="col.header">
+        <template #body="{ data }">{{ cell(data, col) }}</template>
+      </Column>
+    </DataTable>
+  </div>
+</template>
+
+<style scoped>
+.filters {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+.summary {
+  font-weight: 600;
+  margin: 0 0 0.5rem;
+}
+.chart {
+  max-height: 320px;
+  margin-bottom: 1rem;
+}
+</style>
