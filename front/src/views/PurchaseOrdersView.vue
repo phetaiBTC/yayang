@@ -38,8 +38,14 @@ const canSave = computed(
 );
 
 function errorDetail(e: any): string {
-  const m = e?.response?.data?.message ?? e?.message ?? 'Unexpected error';
+  const m = e?.response?.data?.message ?? e?.message ?? 'ເກີດຂໍ້ຜິດພາດ';
   return Array.isArray(m) ? m.join(', ') : String(m);
+}
+
+// Display-only Lao labels; the API status values (pending/received) stay unchanged.
+const STATUS_LABELS: Record<string, string> = { pending: 'ລໍຖ້າ', received: 'ຮັບແລ້ວ' };
+function statusLabel(s: string): string {
+  return STATUS_LABELS[s] ?? s;
 }
 
 function fmtDate(iso: string): string {
@@ -51,7 +57,7 @@ async function load() {
   try {
     orders.value = await listPurchaseOrders();
   } catch (e) {
-    toast.add({ severity: 'error', summary: 'Load failed', detail: errorDetail(e), life: 4000 });
+    toast.add({ severity: 'error', summary: 'ໂຫຼດບໍ່ສຳເລັດ', detail: errorDetail(e), life: 4000 });
   } finally {
     loading.value = false;
   }
@@ -78,11 +84,11 @@ async function save() {
   saving.value = true;
   try {
     await createPurchaseOrder(supId.value, lines.value);
-    toast.add({ severity: 'success', summary: 'Purchase order created', life: 2500 });
+    toast.add({ severity: 'success', summary: 'ສ້າງໃບສັ່ງຊື້ສຳເລັດ', life: 2500 });
     dialogVisible.value = false;
     await load();
   } catch (e) {
-    toast.add({ severity: 'error', summary: 'Save failed', detail: errorDetail(e), life: 4000 });
+    toast.add({ severity: 'error', summary: 'ບັນທຶກບໍ່ສຳເລັດ', detail: errorDetail(e), life: 4000 });
   } finally {
     saving.value = false;
   }
@@ -94,58 +100,58 @@ onMounted(load);
 <template>
   <div>
     <div class="po-header">
-      <h2 class="m-0">Purchase Orders</h2>
+      <h2 class="m-0">ໃບສັ່ງຊື້</h2>
       <span class="flex gap-2">
-        <Button icon="pi pi-refresh" text rounded aria-label="Refresh" @click="load" />
-        <Button label="New PO" icon="pi pi-plus" size="small" @click="openNew" />
+        <Button icon="pi pi-refresh" text rounded aria-label="ໂຫຼດຄືນ" @click="load" />
+        <Button label="ສ້າງໃບສັ່ງຊື້" icon="pi pi-plus" size="small" @click="openNew" />
       </span>
     </div>
 
     <DataTable :value="orders" :loading="loading" paginator :rows="10" stripedRows>
-      <Column field="poId" header="PO #" sortable />
-      <Column field="supplier.supName" header="Supplier" sortable />
-      <Column header="Ordered by">
+      <Column field="poId" header="ເລກທີ" sortable />
+      <Column field="supplier.supName" header="ຜູ້ສະໜອງ" sortable />
+      <Column header="ສັ່ງໂດຍ">
         <template #body="{ data }">{{ data.employee?.username }}</template>
       </Column>
-      <Column header="Date">
+      <Column header="ວັນທີ">
         <template #body="{ data }">{{ fmtDate(data.orderDate) }}</template>
       </Column>
-      <Column field="lineCount" header="Lines" />
-      <Column header="Total cost">
+      <Column field="lineCount" header="ລາຍການ" />
+      <Column header="ມູນຄ່າລວມ">
         <template #body="{ data }">{{ data.totalCost }}</template>
       </Column>
-      <Column header="Status">
+      <Column header="ສະຖານະ">
         <template #body="{ data }">
           <Tag
-            :value="data.status"
+            :value="statusLabel(data.status)"
             :severity="data.status === 'received' ? 'success' : 'warn'"
           />
         </template>
       </Column>
     </DataTable>
 
-    <Dialog v-model:visible="dialogVisible" header="New Purchase Order" modal :style="{ width: '640px' }">
+    <Dialog v-model:visible="dialogVisible" header="ສ້າງໃບສັ່ງຊື້ໃໝ່" modal :style="{ width: '640px' }">
       <div class="flex flex-column gap-3 pt-2">
         <div class="flex flex-column gap-1">
-          <label class="font-medium">Supplier</label>
+          <label class="font-medium">ຜູ້ສະໜອງ</label>
           <Select
             v-model="supId"
             :options="supplierOptions"
             optionLabel="label"
             optionValue="value"
-            placeholder="Select supplier…"
+            placeholder="ເລືອກຜູ້ສະໜອງ…"
           />
         </div>
 
         <div>
           <div class="flex justify-content-between align-items-center mb-2">
-            <span class="font-medium">Lines</span>
-            <Button label="Add line" icon="pi pi-plus" size="small" text @click="addLine" />
+            <span class="font-medium">ລາຍການ</span>
+            <Button label="ເພີ່ມລາຍການ" icon="pi pi-plus" size="small" text @click="addLine" />
           </div>
 
           <table class="lines-table">
             <thead>
-              <tr><th>Book</th><th style="width: 90px">Qty</th><th style="width: 120px">Cost</th><th></th></tr>
+              <tr><th>ປຶ້ມ</th><th style="width: 90px">ຈຳນວນ</th><th style="width: 120px">ຕົ້ນທຶນ</th><th></th></tr>
             </thead>
             <tbody>
               <tr v-for="(line, i) in lines" :key="i">
@@ -155,7 +161,7 @@ onMounted(load);
                     :options="bookOptions"
                     optionLabel="label"
                     optionValue="value"
-                    placeholder="Book…"
+                    placeholder="ປຶ້ມ…"
                     fluid
                   />
                 </td>
@@ -175,13 +181,13 @@ onMounted(load);
             </tbody>
           </table>
 
-          <div class="text-right mt-2"><strong>Total: {{ orderTotal }}</strong></div>
+          <div class="text-right mt-2"><strong>ລວມ: {{ orderTotal }}</strong></div>
         </div>
       </div>
 
       <template #footer>
-        <Button label="Cancel" text @click="dialogVisible = false" />
-        <Button label="Save" icon="pi pi-check" :loading="saving" :disabled="!canSave" @click="save" />
+        <Button label="ຍົກເລີກ" text @click="dialogVisible = false" />
+        <Button label="ບັນທຶກ" icon="pi pi-check" :loading="saving" :disabled="!canSave" @click="save" />
       </template>
     </Dialog>
   </div>

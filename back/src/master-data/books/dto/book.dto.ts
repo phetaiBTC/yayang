@@ -5,6 +5,7 @@ export class CreateBookDto {
   @IsInt() @IsPositive() catId!: number;
   @IsInt() @IsPositive() typeId!: number;
   @IsNumber() @Min(0) price!: number;
+  @IsOptional() @IsString() image?: string;
 }
 
 export class UpdateBookDto {
@@ -12,4 +13,5 @@ export class UpdateBookDto {
   @IsOptional() @IsInt() @IsPositive() catId?: number;
   @IsOptional() @IsInt() @IsPositive() typeId?: number;
   @IsOptional() @IsNumber() @Min(0) price?: number;
+  @IsOptional() @IsString() image?: string;
 }

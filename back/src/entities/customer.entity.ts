@@ -7,6 +7,7 @@ export class Customer {
   @PrimaryKey({ fieldName: 'cus_id' }) cusId!: number;
   @Property() name!: string;
   @Property({ nullable: true }) phone?: string;
+  @Property({ nullable: true }) email?: string;
   @Property({ fieldName: 'otp_verified', default: false }) otpVerified = false;
   @Property({ fieldName: 'created_at', onCreate: () => new Date() })
   createdAt = new Date();

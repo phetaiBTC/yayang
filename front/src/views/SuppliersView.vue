@@ -5,19 +5,19 @@ import { suppliersApi } from '../api/resources';
 
 <template>
   <ResourceManager
-    title="Suppliers"
+    title="ຜູ້ສະໜອງ"
     :api="suppliersApi"
     id-key="supId"
     :columns="[
-      { field: 'supId', header: 'ID' },
-      { field: 'supName', header: 'Name' },
-      { field: 'phone', header: 'Phone' },
-      { field: 'address', header: 'Address' },
+      { field: 'supId', header: 'ລະຫັດ' },
+      { field: 'supName', header: 'ຊື່' },
+      { field: 'phone', header: 'ເບີໂທ' },
+      { field: 'address', header: 'ທີ່ຢູ່' },
     ]"
     :fields="[
-      { name: 'supName', label: 'Supplier name', type: 'text' },
-      { name: 'phone', label: 'Phone', type: 'text' },
-      { name: 'address', label: 'Address', type: 'text' },
+      { name: 'supName', label: 'ຊື່ຜູ້ສະໜອງ', type: 'text' },
+      { name: 'phone', label: 'ເບີໂທ', type: 'text' },
+      { name: 'address', label: 'ທີ່ຢູ່', type: 'text' },
     ]"
     :can-write="true"
   />

@@ -29,10 +29,10 @@ const emit = defineEmits<{
     <div class="crud-header">
       <h2 class="m-0">{{ title }}</h2>
       <span class="flex gap-2">
-        <Button icon="pi pi-refresh" text rounded aria-label="Refresh" @click="emit('refresh')" />
+        <Button icon="pi pi-refresh" text rounded aria-label="ໂຫຼດຄືນ" @click="emit('refresh')" />
         <Button
           v-if="canWrite"
-          label="New"
+          label="ເພີ່ມ"
           icon="pi pi-plus"
           size="small"
           @click="emit('new')"
@@ -51,15 +51,15 @@ const emit = defineEmits<{
       responsiveLayout="scroll"
     >
       <Column v-for="c in columns" :key="c.field" :field="c.field" :header="c.header" sortable />
-      <Column v-if="canWrite" header="Actions" :style="{ width: '8rem' }">
+      <Column v-if="canWrite" header="ຈັດການ" :style="{ width: '8rem' }">
         <template #body="{ data }">
-          <Button icon="pi pi-pencil" text rounded aria-label="Edit" @click="emit('edit', data)" />
+          <Button icon="pi pi-pencil" text rounded aria-label="ແກ້ໄຂ" @click="emit('edit', data)" />
           <Button
             icon="pi pi-trash"
             text
             rounded
             severity="danger"
-            aria-label="Delete"
+            aria-label="ລຶບ"
             @click="emit('delete', data)"
           />
         </template>

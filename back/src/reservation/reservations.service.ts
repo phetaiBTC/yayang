@@ -22,8 +22,13 @@ const TRANSITIONS: Record<string, string[]> = {
 export class ReservationsService {
   constructor(private readonly em: EntityManager) {}
 
-  /** Create a booked reservation with line items. Never touches stock. */
-  async create(empId: number, dto: CreateReservationDto) {
+  /**
+   * Create a booked reservation with line items. Never touches stock.
+   * `empId` is null for customer self-service reservations (no staff yet).
+   * `deposit` (optional) records an up-front deposit paid at booking time;
+   * it must be > 0 and not exceed the reservation total.
+   */
+  async create(empId: number | null, dto: CreateReservationDto, deposit?: number) {
     const customer = await this.em.findOne(Customer, { cusId: dto.cusId });
     if (!customer) throw new BadRequestException(`Customer ${dto.cusId} does not exist`);
 
@@ -33,12 +38,19 @@ export class ReservationsService {
     if (missing.length) throw new BadRequestException(`Unknown book(s): ${missing.join(', ')}`);
     const priceById = new Map(books.map((b) => [b.bookId, b.price]));
 
+    const total = dto.lines.reduce((sum, l) => sum + l.qty * Number(priceById.get(l.bookId)!), 0);
+    if (deposit != null) {
+      if (deposit <= 0) throw new BadRequestException('Deposit must be greater than 0');
+      if (deposit > total) throw new BadRequestException('Deposit cannot exceed the total');
+    }
+
     const resId = await this.em.transactional(async (tem) => {
       const reservation = tem.create(
         Reservation,
         {
           customer: tem.getReference(Customer, dto.cusId as never),
-          employee: tem.getReference(Employee, empId as never),
+          employee: empId != null ? tem.getReference(Employee, empId as never) : undefined,
+          deposit: deposit != null ? deposit.toFixed(2) : '0',
         },
         { partial: true },
       );
@@ -106,9 +118,18 @@ export class ReservationsService {
   }
 
   async findAll() {
+    return this.listWhere({});
+  }
+
+  /** Reservations belonging to a single customer (for the customer self-service view). */
+  async findAllForCustomer(cusId: number) {
+    return this.listWhere({ customer: cusId });
+  }
+
+  private async listWhere(where: Record<string, any>) {
     const reservations = await this.em.find(
       Reservation,
-      {},
+      where,
       {
         populate: ['customer', 'employee', 'details', 'details.book'],
         orderBy: { resId: 'DESC' },

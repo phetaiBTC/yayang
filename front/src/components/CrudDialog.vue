@@ -85,14 +85,14 @@ function save() {
           :options="f.options"
           optionLabel="label"
           optionValue="value"
-          placeholder="Select…"
+          placeholder="ເລືອກ…"
         />
         <small v-if="f.hint" class="text-color-secondary">{{ f.hint }}</small>
       </div>
     </div>
     <template #footer>
-      <Button label="Cancel" text @click="emit('update:visible', false)" />
-      <Button label="Save" icon="pi pi-check" @click="save" />
+      <Button label="ຍົກເລີກ" text @click="emit('update:visible', false)" />
+      <Button label="ບັນທຶກ" icon="pi pi-check" @click="save" />
     </template>
   </Dialog>
 </template>

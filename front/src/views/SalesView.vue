@@ -25,8 +25,8 @@ const paymentMethod = ref<PaymentMethod>('cash');
 const lines = ref<SaleLineInput[]>([]);
 
 const paymentOptions = [
-  { label: 'Cash', value: 'cash' },
-  { label: 'Transfer', value: 'transfer' },
+  { label: 'ເງິນສົດ', value: 'cash' },
+  { label: 'ໂອນ', value: 'transfer' },
   { label: 'QR', value: 'qr' },
 ];
 
@@ -34,7 +34,7 @@ const customerOptions = computed(() =>
   customers.value.map((c) => ({ label: `${c.name}${c.phone ? ' — ' + c.phone : ''}`, value: c.cusId })),
 );
 const bookOptions = computed(() =>
-  books.value.map((b) => ({ label: `${b.title} (stock ${b.stock})`, value: b.bookId })),
+  books.value.map((b) => ({ label: `${b.title} (ສະຕັອກ ${b.stock})`, value: b.bookId })),
 );
 
 function bookOf(bookId: number) {
@@ -61,7 +61,7 @@ const canSave = computed(
 );
 
 function errorDetail(e: any): string {
-  const m = e?.response?.data?.message ?? e?.message ?? 'Unexpected error';
+  const m = e?.response?.data?.message ?? e?.message ?? 'ເກີດຂໍ້ຜິດພາດ';
   return Array.isArray(m) ? m.join(', ') : String(m);
 }
 function fmtDate(iso: string): string {
@@ -70,13 +70,18 @@ function fmtDate(iso: string): string {
 function paymentSeverity(p: string): string {
   return p === 'cash' ? 'success' : p === 'qr' ? 'info' : 'warn';
 }
+// Display-only Lao labels; the API payment values (cash/transfer/qr) stay unchanged.
+const PAYMENT_LABELS: Record<string, string> = { cash: 'ເງິນສົດ', transfer: 'ໂອນ', qr: 'QR' };
+function paymentLabel(p: string): string {
+  return PAYMENT_LABELS[p] ?? p;
+}
 
 async function load() {
   loading.value = true;
   try {
     sales.value = await listSales();
   } catch (e) {
-    toast.add({ severity: 'error', summary: 'Load failed', detail: errorDetail(e), life: 4000 });
+    toast.add({ severity: 'error', summary: 'ໂຫຼດບໍ່ສຳເລັດ', detail: errorDetail(e), life: 4000 });
   } finally {
     loading.value = false;
   }
@@ -102,11 +107,11 @@ async function save() {
   saving.value = true;
   try {
     await createSale(cusId.value, paymentMethod.value, lines.value);
-    toast.add({ severity: 'success', summary: 'Sale recorded — stock updated', life: 2800 });
+    toast.add({ severity: 'success', summary: 'ບັນທຶກການຂາຍແລ້ວ — ອັບເດດສະຕັອກ', life: 2800 });
     dialogVisible.value = false;
     await load();
   } catch (e) {
-    toast.add({ severity: 'error', summary: 'Sale failed', detail: errorDetail(e), life: 4000 });
+    toast.add({ severity: 'error', summary: 'ຂາຍບໍ່ສຳເລັດ', detail: errorDetail(e), life: 4000 });
   } finally {
     saving.value = false;
   }
@@ -118,53 +123,53 @@ onMounted(load);
 <template>
   <div>
     <div class="sale-header">
-      <h2 class="m-0">Sales</h2>
+      <h2 class="m-0">ການຂາຍ</h2>
       <span class="flex gap-2">
-        <Button icon="pi pi-refresh" text rounded aria-label="Refresh" @click="load" />
-        <Button label="New sale" icon="pi pi-plus" size="small" @click="openNew" />
+        <Button icon="pi pi-refresh" text rounded aria-label="ໂຫຼດຄືນ" @click="load" />
+        <Button label="ຂາຍໃໝ່" icon="pi pi-plus" size="small" @click="openNew" />
       </span>
     </div>
 
     <DataTable :value="sales" :loading="loading" paginator :rows="10" stripedRows>
-      <Column field="saleId" header="Sale #" sortable />
-      <Column header="Customer"><template #body="{ data }">{{ data.customer?.name }}</template></Column>
-      <Column header="By"><template #body="{ data }">{{ data.employee?.username }}</template></Column>
-      <Column header="Date"><template #body="{ data }">{{ fmtDate(data.saleDate) }}</template></Column>
-      <Column header="Payment">
+      <Column field="saleId" header="ເລກທີ" sortable />
+      <Column header="ລູກຄ້າ"><template #body="{ data }">{{ data.customer?.name }}</template></Column>
+      <Column header="ໂດຍ"><template #body="{ data }">{{ data.employee?.username }}</template></Column>
+      <Column header="ວັນທີ"><template #body="{ data }">{{ fmtDate(data.saleDate) }}</template></Column>
+      <Column header="ການຊຳລະ">
         <template #body="{ data }">
-          <Tag :value="data.paymentMethod" :severity="paymentSeverity(data.paymentMethod)" />
+          <Tag :value="paymentLabel(data.paymentMethod)" :severity="paymentSeverity(data.paymentMethod)" />
         </template>
       </Column>
-      <Column field="lineCount" header="Lines" />
-      <Column field="total" header="Total" sortable />
+      <Column field="lineCount" header="ລາຍການ" />
+      <Column field="total" header="ລວມ" sortable />
     </DataTable>
 
-    <Dialog v-model:visible="dialogVisible" header="New Sale" modal :style="{ width: '660px' }">
+    <Dialog v-model:visible="dialogVisible" header="ຂາຍໃໝ່" modal :style="{ width: '660px' }">
       <div class="flex flex-column gap-3 pt-2">
         <div class="grid-2">
           <div class="flex flex-column gap-1">
-            <label class="font-medium">Customer</label>
-            <Select v-model="cusId" :options="customerOptions" optionLabel="label" optionValue="value" placeholder="Select customer…" />
+            <label class="font-medium">ລູກຄ້າ</label>
+            <Select v-model="cusId" :options="customerOptions" optionLabel="label" optionValue="value" placeholder="ເລືອກລູກຄ້າ…" />
           </div>
           <div class="flex flex-column gap-1">
-            <label class="font-medium">Payment method</label>
+            <label class="font-medium">ວິທີຊຳລະ</label>
             <Select v-model="paymentMethod" :options="paymentOptions" optionLabel="label" optionValue="value" />
           </div>
         </div>
 
         <div>
           <div class="flex justify-content-between align-items-center mb-2">
-            <span class="font-medium">Lines</span>
-            <Button label="Add line" icon="pi pi-plus" size="small" text @click="addLine" />
+            <span class="font-medium">ລາຍການ</span>
+            <Button label="ເພີ່ມລາຍການ" icon="pi pi-plus" size="small" text @click="addLine" />
           </div>
           <table class="lines-table">
             <thead>
-              <tr><th>Book</th><th style="width: 90px">Qty</th><th style="width: 110px">Subtotal</th><th></th></tr>
+              <tr><th>ປຶ້ມ</th><th style="width: 90px">ຈຳນວນ</th><th style="width: 110px">ລວມຍ່ອຍ</th><th></th></tr>
             </thead>
             <tbody>
               <tr v-for="(line, i) in lines" :key="i">
                 <td>
-                  <Select v-model="line.bookId" :options="bookOptions" optionLabel="label" optionValue="value" placeholder="Book…" fluid />
+                  <Select v-model="line.bookId" :options="bookOptions" optionLabel="label" optionValue="value" placeholder="ປຶ້ມ…" fluid />
                 </td>
                 <td><InputNumber v-model="line.qty" :min="1" :max="lineMax(line.bookId)" fluid /></td>
                 <td>{{ lineSubtotal(line).toFixed(2) }}</td>
@@ -174,13 +179,13 @@ onMounted(load);
               </tr>
             </tbody>
           </table>
-          <div class="text-right mt-2"><strong>Total: {{ orderTotal.toFixed(2) }}</strong></div>
+          <div class="text-right mt-2"><strong>ລວມ: {{ orderTotal.toFixed(2) }}</strong></div>
         </div>
       </div>
 
       <template #footer>
-        <Button label="Cancel" text @click="dialogVisible = false" />
-        <Button label="Confirm sale" icon="pi pi-check" :loading="saving" :disabled="!canSave" @click="save" />
+        <Button label="ຍົກເລີກ" text @click="dialogVisible = false" />
+        <Button label="ຢືນຢັນການຂາຍ" icon="pi pi-check" :loading="saving" :disabled="!canSave" @click="save" />
       </template>
     </Dialog>
   </div>

@@ -1,11 +1,13 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import { api, getToken, setToken, clearToken } from '../api/client';
+import { verifyCustomerLoginOtp } from '../api/registration';
 
 export interface AuthUser {
-  empId: number;
+  empId?: number;
+  cusId?: number;
   username: string;
-  role: 'admin' | 'staff';
+  role: 'admin' | 'staff' | 'customer';
 }
 
 const USER_KEY = 'auth_user';
@@ -21,18 +23,29 @@ export const useAuthStore = defineStore('auth', () => {
 
   const isAuthenticated = computed(() => !!token.value);
   const isAdmin = computed(() => user.value?.role === 'admin');
+  const isCustomer = computed(() => user.value?.role === 'customer');
 
-  /** Authenticate against the API and persist the session. */
+  function persistSession(access_token: string, authUser: AuthUser) {
+    token.value = access_token;
+    user.value = authUser;
+    setToken(access_token);
+    localStorage.setItem(USER_KEY, JSON.stringify(authUser));
+  }
+
+  /** Employee login (username + password). */
   async function signIn(username: string, password: string) {
     const res = await api.post('/auth/login', { username, password });
     const { access_token, user: authUser } = res.data.data as {
       access_token: string;
       user: AuthUser;
     };
-    token.value = access_token;
-    user.value = authUser;
-    setToken(access_token);
-    localStorage.setItem(USER_KEY, JSON.stringify(authUser));
+    persistSession(access_token, authUser);
+  }
+
+  /** Customer login step 2 (email + OTP code). */
+  async function signInCustomer(email: string, code: string) {
+    const { access_token, user: authUser } = await verifyCustomerLoginOtp(email, code);
+    persistSession(access_token, authUser);
   }
 
   function logout() {
@@ -42,5 +55,5 @@ export const useAuthStore = defineStore('auth', () => {
     localStorage.removeItem(USER_KEY);
   }
 
-  return { token, user, isAuthenticated, isAdmin, signIn, logout };
+  return { token, user, isAuthenticated, isAdmin, isCustomer, signIn, signInCustomer, logout };
 });

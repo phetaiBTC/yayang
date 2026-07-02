@@ -4,17 +4,17 @@ import { employeesApi } from '../api/resources';
 import type { FieldDef } from '../components/CrudDialog.vue';
 
 const fields: FieldDef[] = [
-  { name: 'name', label: 'Name', type: 'text' },
-  { name: 'phone', label: 'Phone', type: 'text' },
-  { name: 'username', label: 'Username', type: 'text' },
-  { name: 'password', label: 'Password', type: 'password', hint: 'Min 6 chars. Leave blank when editing to keep current.' },
+  { name: 'name', label: 'ຊື່', type: 'text' },
+  { name: 'phone', label: 'ເບີໂທ', type: 'text' },
+  { name: 'username', label: 'ຊື່ຜູ້ໃຊ້', type: 'text' },
+  { name: 'password', label: 'ລະຫັດຜ່ານ', type: 'password', hint: 'ຢ່າງໜ້ອຍ 6 ຕົວອັກສອນ. ປະໄວ້ຫວ່າງເມື່ອແກ້ໄຂເພື່ອຮັກສາລະຫັດເດີມ.' },
   {
     name: 'role',
-    label: 'Role',
+    label: 'ສິດ',
     type: 'select',
     options: [
-      { label: 'Admin', value: 'admin' },
-      { label: 'Staff', value: 'staff' },
+      { label: 'ຜູ້ດູແລ', value: 'admin' },
+      { label: 'ພະນັກງານ', value: 'staff' },
     ],
   },
 ];
@@ -27,15 +27,15 @@ function toForm(row: any) {
 
 <template>
   <ResourceManager
-    title="Employees"
+    title="ພະນັກງານ"
     :api="employeesApi"
     id-key="empId"
     :columns="[
-      { field: 'empId', header: 'ID' },
-      { field: 'name', header: 'Name' },
-      { field: 'username', header: 'Username' },
-      { field: 'phone', header: 'Phone' },
-      { field: 'role', header: 'Role' },
+      { field: 'empId', header: 'ລະຫັດ' },
+      { field: 'name', header: 'ຊື່' },
+      { field: 'username', header: 'ຊື່ຜູ້ໃຊ້' },
+      { field: 'phone', header: 'ເບີໂທ' },
+      { field: 'role', header: 'ສິດ' },
     ]"
     :fields="fields"
     :to-form="toForm"

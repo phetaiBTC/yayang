@@ -7,7 +7,8 @@ import { SaleDetail } from './sale-detail.entity';
 export class Sale {
   @PrimaryKey({ fieldName: 'sale_id' }) saleId!: number;
   @ManyToOne(() => Customer, { fieldName: 'cus_id' }) customer!: Customer;
-  @ManyToOne(() => Employee, { fieldName: 'emp_id' }) employee!: Employee;
+  // Nullable: customer self-checkout sales have no employee.
+  @ManyToOne(() => Employee, { fieldName: 'emp_id', nullable: true }) employee?: Employee;
   @Property({ fieldName: 'sale_date', onCreate: () => new Date() })
   saleDate = new Date();
   @Property({ type: 'decimal', precision: 12, scale: 2 }) total!: string;

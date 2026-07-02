@@ -40,14 +40,14 @@ const customerOptions = computed(() =>
   customers.value.map((c) => ({ label: c.name, value: c.cusId })),
 );
 const bookOptions = computed(() =>
-  books.value.map((b) => ({ label: `${b.title} (stock ${b.stock})`, value: b.bookId })),
+  books.value.map((b) => ({ label: `${b.title} (ສະຕັອກ ${b.stock})`, value: b.bookId })),
 );
 const canSave = computed(
   () => cusId.value != null && lines.value.length > 0 && lines.value.every((l) => l.bookId && l.qty >= 1),
 );
 
 function errorDetail(e: any): string {
-  const m = e?.response?.data?.message ?? e?.message ?? 'Unexpected error';
+  const m = e?.response?.data?.message ?? e?.message ?? 'ເກີດຂໍ້ຜິດພາດ';
   return Array.isArray(m) ? m.join(', ') : String(m);
 }
 function fmtDate(iso: string): string {
@@ -56,13 +56,23 @@ function fmtDate(iso: string): string {
 function statusSeverity(s: string): string {
   return s === 'completed' ? 'success' : s === 'ready' ? 'info' : s === 'cancelled' ? 'danger' : 'warn';
 }
+// Display-only Lao labels; the API status values (booked/ready/completed/cancelled) stay unchanged.
+const STATUS_LABELS: Record<string, string> = {
+  booked: 'ຈອງແລ້ວ',
+  ready: 'ພ້ອມຮັບ',
+  completed: 'ສຳເລັດ',
+  cancelled: 'ຍົກເລີກ',
+};
+function statusLabel(s: string): string {
+  return STATUS_LABELS[s] ?? s;
+}
 
 async function load() {
   loading.value = true;
   try {
     reservations.value = await listReservations();
   } catch (e) {
-    toast.add({ severity: 'error', summary: 'Load failed', detail: errorDetail(e), life: 4000 });
+    toast.add({ severity: 'error', summary: 'ໂຫຼດບໍ່ສຳເລັດ', detail: errorDetail(e), life: 4000 });
   } finally {
     loading.value = false;
   }
@@ -87,11 +97,11 @@ async function save() {
   saving.value = true;
   try {
     await createReservation(cusId.value, lines.value);
-    toast.add({ severity: 'success', summary: 'Reservation created', life: 2500 });
+    toast.add({ severity: 'success', summary: 'ສ້າງການຈອງສຳເລັດ', life: 2500 });
     createVisible.value = false;
     await load();
   } catch (e) {
-    toast.add({ severity: 'error', summary: 'Save failed', detail: errorDetail(e), life: 4000 });
+    toast.add({ severity: 'error', summary: 'ບັນທຶກບໍ່ສຳເລັດ', detail: errorDetail(e), life: 4000 });
   } finally {
     saving.value = false;
   }
@@ -107,11 +117,11 @@ async function saveDeposit() {
   depositSaving.value = true;
   try {
     await setDeposit(depositTarget.value.resId, depositAmount.value);
-    toast.add({ severity: 'success', summary: 'Deposit recorded', life: 2500 });
+    toast.add({ severity: 'success', summary: 'ບັນທຶກເງິນມັດຈຳແລ້ວ', life: 2500 });
     depositVisible.value = false;
     await load();
   } catch (e) {
-    toast.add({ severity: 'error', summary: 'Deposit failed', detail: errorDetail(e), life: 4000 });
+    toast.add({ severity: 'error', summary: 'ບັນທຶກເງິນມັດຈຳບໍ່ສຳເລັດ', detail: errorDetail(e), life: 4000 });
   } finally {
     depositSaving.value = false;
   }
@@ -120,10 +130,10 @@ async function saveDeposit() {
 async function advance(row: any, status: 'ready' | 'completed' | 'cancelled') {
   try {
     await setStatus(row.resId, status);
-    toast.add({ severity: 'success', summary: `Marked ${status}`, life: 2500 });
+    toast.add({ severity: 'success', summary: `ປ່ຽນສະຖານະເປັນ ${statusLabel(status)}`, life: 2500 });
     await load();
   } catch (e) {
-    toast.add({ severity: 'warn', summary: 'Cannot update status', detail: errorDetail(e), life: 4500 });
+    toast.add({ severity: 'warn', summary: 'ປ່ຽນສະຖານະບໍ່ໄດ້', detail: errorDetail(e), life: 4500 });
   }
 }
 
@@ -133,32 +143,32 @@ onMounted(load);
 <template>
   <div>
     <div class="res-header">
-      <h2 class="m-0">Reservations</h2>
+      <h2 class="m-0">ການຈອງ</h2>
       <span class="flex gap-2">
-        <Button icon="pi pi-refresh" text rounded aria-label="Refresh" @click="load" />
-        <Button label="New reservation" icon="pi pi-plus" size="small" @click="openNew" />
+        <Button icon="pi pi-refresh" text rounded aria-label="ໂຫຼດຄືນ" @click="load" />
+        <Button label="ຈອງໃໝ່" icon="pi pi-plus" size="small" @click="openNew" />
       </span>
     </div>
 
-    <DataTable :value="reservations" :loading="loading" paginator :rows="10" stripedRows>
-      <Column field="resId" header="#" sortable />
-      <Column header="Customer"><template #body="{ data }">{{ data.customer?.name }}</template></Column>
-      <Column header="Date"><template #body="{ data }">{{ fmtDate(data.resDate) }}</template></Column>
-      <Column header="Status">
+    <DataTable :value="reservations" :loading="loading" paginator :rows="10" stripedRows scrollable scrollHeight="400px">
+      <Column field="resId" header="ເລກທີ" sortable />
+      <Column header="ລູກຄ້າ"><template #body="{ data }">{{ data.customer?.name }}</template></Column>
+      <Column header="ວັນທີ"><template #body="{ data }"><span class="nowrap">{{ fmtDate(data.resDate) }}</span></template></Column>
+      <Column header="ສະຖານະ">
         <template #body="{ data }">
-          <Tag :value="data.status" :severity="statusSeverity(data.status)" />
-          <Tag v-if="data.readyEligible" value="ready-eligible" severity="info" class="ml-1" />
+          <Tag :value="statusLabel(data.status)" :severity="statusSeverity(data.status)" />
+          <Tag v-if="data.readyEligible" value="ພ້ອມຮັບໄດ້" severity="info" class="ml-1" />
         </template>
       </Column>
-      <Column field="deposit" header="Deposit" />
-      <Column field="total" header="Total" />
-      <Column field="balance" header="Balance" />
-      <Column header="Actions" :style="{ width: '20rem' }">
+      <Column field="deposit" header="ເງິນມັດຈຳ" />
+      <Column field="total" header="ລວມ" />
+      <Column field="balance" header="ຍອດຄ້າງ" />
+      <Column header="ຈັດການ" :style="{ width: '20rem' }">
         <template #body="{ data }">
           <span class="flex gap-1 flex-wrap">
             <Button
               v-if="data.status === 'booked' || data.status === 'ready'"
-              label="Deposit"
+              label="ເງິນມັດຈຳ"
               icon="pi pi-wallet"
               size="small"
               text
@@ -166,7 +176,7 @@ onMounted(load);
             />
             <Button
               v-if="data.status === 'booked'"
-              label="Ready"
+              label="ພ້ອມຮັບ"
               icon="pi pi-check-circle"
               size="small"
               :disabled="!data.readyEligible"
@@ -174,7 +184,7 @@ onMounted(load);
             />
             <Button
               v-if="data.status === 'ready'"
-              label="Complete"
+              label="ສຳເລັດ"
               icon="pi pi-flag"
               size="small"
               severity="success"
@@ -182,7 +192,7 @@ onMounted(load);
             />
             <Button
               v-if="data.status === 'booked' || data.status === 'ready'"
-              label="Cancel"
+              label="ຍົກເລີກ"
               icon="pi pi-times"
               size="small"
               severity="danger"
@@ -195,22 +205,22 @@ onMounted(load);
     </DataTable>
 
     <!-- Create reservation -->
-    <Dialog v-model:visible="createVisible" header="New Reservation" modal :style="{ width: '620px' }">
+    <Dialog v-model:visible="createVisible" header="ຈອງໃໝ່" modal :style="{ width: '620px' }">
       <div class="flex flex-column gap-3 pt-2">
         <div class="flex flex-column gap-1">
-          <label class="font-medium">Customer</label>
-          <Select v-model="cusId" :options="customerOptions" optionLabel="label" optionValue="value" placeholder="Select customer…" />
+          <label class="font-medium">ລູກຄ້າ</label>
+          <Select v-model="cusId" :options="customerOptions" optionLabel="label" optionValue="value" placeholder="ເລືອກລູກຄ້າ…" />
         </div>
         <div>
           <div class="flex justify-content-between align-items-center mb-2">
-            <span class="font-medium">Books</span>
-            <Button label="Add line" icon="pi pi-plus" size="small" text @click="addLine" />
+            <span class="font-medium">ປຶ້ມ</span>
+            <Button label="ເພີ່ມລາຍການ" icon="pi pi-plus" size="small" text @click="addLine" />
           </div>
           <table class="lines-table">
-            <thead><tr><th>Book</th><th style="width: 90px">Qty</th><th></th></tr></thead>
+            <thead><tr><th>ປຶ້ມ</th><th style="width: 90px">ຈຳນວນ</th><th></th></tr></thead>
             <tbody>
               <tr v-for="(line, i) in lines" :key="i">
-                <td><Select v-model="line.bookId" :options="bookOptions" optionLabel="label" optionValue="value" placeholder="Book…" fluid /></td>
+                <td><Select v-model="line.bookId" :options="bookOptions" optionLabel="label" optionValue="value" placeholder="ປຶ້ມ…" fluid /></td>
                 <td><InputNumber v-model="line.qty" :min="1" fluid /></td>
                 <td><Button icon="pi pi-trash" text rounded severity="danger" :disabled="lines.length === 1" @click="removeLine(i)" /></td>
               </tr>
@@ -219,21 +229,21 @@ onMounted(load);
         </div>
       </div>
       <template #footer>
-        <Button label="Cancel" text @click="createVisible = false" />
-        <Button label="Save" icon="pi pi-check" :loading="saving" :disabled="!canSave" @click="save" />
+        <Button label="ຍົກເລີກ" text @click="createVisible = false" />
+        <Button label="ບັນທຶກ" icon="pi pi-check" :loading="saving" :disabled="!canSave" @click="save" />
       </template>
     </Dialog>
 
     <!-- Record deposit -->
-    <Dialog v-model:visible="depositVisible" header="Record Deposit" modal :style="{ width: '360px' }">
+    <Dialog v-model:visible="depositVisible" header="ບັນທຶກເງິນມັດຈຳ" modal :style="{ width: '360px' }">
       <div class="flex flex-column gap-2 pt-2" v-if="depositTarget">
-        <p class="m-0">Reservation #{{ depositTarget.resId }} — total {{ depositTarget.total }}</p>
-        <label class="font-medium">Deposit amount</label>
+        <p class="m-0">ການຈອງ #{{ depositTarget.resId }} — ລວມ {{ depositTarget.total }}</p>
+        <label class="font-medium">ຈຳນວນເງິນມັດຈຳ</label>
         <InputNumber v-model="depositAmount" :min="0" :minFractionDigits="0" :maxFractionDigits="2" fluid />
       </div>
       <template #footer>
-        <Button label="Cancel" text @click="depositVisible = false" />
-        <Button label="Save" icon="pi pi-check" :loading="depositSaving" @click="saveDeposit" />
+        <Button label="ຍົກເລີກ" text @click="depositVisible = false" />
+        <Button label="ບັນທຶກ" icon="pi pi-check" :loading="depositSaving" @click="saveDeposit" />
       </template>
     </Dialog>
   </div>
@@ -245,6 +255,17 @@ onMounted(load);
   align-items: center;
   justify-content: space-between;
   margin-bottom: 1rem;
+}
+/* Keep headers on one line and align cells to the top so tall action
+   cells don't stretch the row awkwardly. */
+:deep(.p-datatable-thead > tr > th) {
+  white-space: nowrap;
+}
+:deep(.p-datatable-tbody > tr > td) {
+  vertical-align: middle;
+}
+.nowrap {
+  white-space: nowrap;
 }
 .lines-table {
   width: 100%;

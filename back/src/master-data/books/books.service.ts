@@ -29,6 +29,7 @@ export class BooksService {
         category,
         bookType,
         price: String(dto.price),
+        image: dto.image,
       },
       { partial: true },
     );
@@ -40,6 +41,7 @@ export class BooksService {
     const book = await this.findOne(id);
     if (dto.title !== undefined) book.title = dto.title;
     if (dto.price !== undefined) book.price = String(dto.price);
+    if (dto.image !== undefined) book.image = dto.image;
     if (dto.catId !== undefined) book.category = await this.requireCategory(dto.catId);
     if (dto.typeId !== undefined) book.bookType = await this.requireBookType(dto.typeId);
     // stock deliberately not touched here.

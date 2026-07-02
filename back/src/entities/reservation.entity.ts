@@ -7,7 +7,8 @@ import { ReservationDetail } from './reservation-detail.entity';
 export class Reservation {
   @PrimaryKey({ fieldName: 'res_id' }) resId!: number;
   @ManyToOne(() => Customer, { fieldName: 'cus_id' }) customer!: Customer;
-  @ManyToOne(() => Employee, { fieldName: 'emp_id' }) employee!: Employee;
+  // Nullable: customer self-service reservations have no employee until staff pick them up.
+  @ManyToOne(() => Employee, { fieldName: 'emp_id', nullable: true }) employee?: Employee;
   @Property({ fieldName: 'res_date', onCreate: () => new Date() })
   resDate = new Date();
   @Property({ type: 'decimal', precision: 12, scale: 2, default: 0 }) deposit = '0';

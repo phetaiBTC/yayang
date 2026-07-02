@@ -8,8 +8,11 @@ import { CreateSaleDto } from './dto/create-sale.dto';
 export class SalesService {
   constructor(private readonly em: EntityManager) {}
 
-  /** Record a sale: validate stock, decrement it, compute total — atomically. */
-  async create(empId: number, dto: CreateSaleDto) {
+  /**
+   * Record a sale: validate stock, decrement it, compute total — atomically.
+   * `empId` is null for customer self-checkout sales (no staff).
+   */
+  async create(empId: number | null, dto: CreateSaleDto) {
     const customer = await this.em.findOne(Customer, { cusId: dto.cusId });
     if (!customer) throw new BadRequestException(`Customer ${dto.cusId} does not exist`);
 
@@ -41,7 +44,7 @@ export class SalesService {
         Sale,
         {
           customer: tem.getReference(Customer, dto.cusId as never),
-          employee: tem.getReference(Employee, empId as never),
+          employee: empId != null ? tem.getReference(Employee, empId as never) : undefined,
           paymentMethod: dto.paymentMethod,
           total: '0',
         },
@@ -80,9 +83,18 @@ export class SalesService {
   }
 
   async findAll() {
+    return this.listWhere({});
+  }
+
+  /** Sales belonging to a single customer (purchase history for the storefront). */
+  async findAllForCustomer(cusId: number) {
+    return this.listWhere({ customer: cusId });
+  }
+
+  private async listWhere(where: Record<string, any>) {
     const sales = await this.em.find(
       Sale,
-      {},
+      where,
       { populate: ['customer', 'employee', 'details'], orderBy: { saleId: 'DESC' } },
     );
     return sales.map((s) => ({ ...serialize(s), lineCount: s.details.length }));
@@ -93,6 +105,17 @@ export class SalesService {
       Sale,
       { saleId: id },
       { populate: ['customer', 'employee', 'details', 'details.book'] },
+    );
+    if (!sale) throw new NotFoundException('Sale not found');
+    return serialize(sale);
+  }
+
+  /** A single sale scoped to its owner — used for the customer's own receipt. */
+  async findOneForCustomer(cusId: number, id: number) {
+    const sale = await this.em.findOne(
+      Sale,
+      { saleId: id, customer: { cusId } },
+      { populate: ['customer', 'details', 'details.book'] },
     );
     if (!sale) throw new NotFoundException('Sale not found');
     return serialize(sale);

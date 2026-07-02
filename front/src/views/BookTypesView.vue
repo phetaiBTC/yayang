@@ -8,14 +8,14 @@ const auth = useAuthStore();
 
 <template>
   <ResourceManager
-    title="Book Types"
+    title="ປະເພດປຶ້ມ"
     :api="bookTypesApi"
     id-key="typeId"
     :columns="[
-      { field: 'typeId', header: 'ID' },
-      { field: 'typeName', header: 'Name' },
+      { field: 'typeId', header: 'ລະຫັດ' },
+      { field: 'typeName', header: 'ຊື່' },
     ]"
-    :fields="[{ name: 'typeName', label: 'Type name', type: 'text' }]"
+    :fields="[{ name: 'typeName', label: 'ຊື່ປະເພດ', type: 'text' }]"
     :can-write="auth.isAdmin"
   />
 </template>

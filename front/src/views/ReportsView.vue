@@ -32,71 +32,71 @@ const toast = useToast();
 
 const REPORTS: Record<string, ReportDef> = {
   registration: {
-    label: 'Registration',
+    label: 'ການລົງທະບຽນ',
     columns: [
-      { field: 'cusId', header: 'ID' },
-      { field: 'name', header: 'Name' },
-      { field: 'phone', header: 'Phone' },
-      { field: 'otpVerified', header: 'OTP verified' },
-      { field: 'createdAt', header: 'Registered', kind: 'date' },
+      { field: 'cusId', header: 'ລະຫັດ' },
+      { field: 'name', header: 'ຊື່' },
+      { field: 'phone', header: 'ເບີໂທ' },
+      { field: 'otpVerified', header: 'ຢືນຢັນ OTP' },
+      { field: 'createdAt', header: 'ລົງທະບຽນເມື່ອ', kind: 'date' },
     ],
     fetch: reportRegistration,
   },
   'purchase-orders': {
-    label: 'Purchase Orders',
+    label: 'ໃບສັ່ງຊື້',
     columns: [
-      { field: 'poId', header: 'PO #' },
-      { field: 'supplier.supName', header: 'Supplier' },
-      { field: 'orderDate', header: 'Date', kind: 'date' },
-      { field: 'status', header: 'Status' },
-      { field: 'lineCount', header: 'Lines' },
-      { field: 'totalCost', header: 'Total cost' },
+      { field: 'poId', header: 'ເລກທີ' },
+      { field: 'supplier.supName', header: 'ຜູ້ສະໜອງ' },
+      { field: 'orderDate', header: 'ວັນທີ', kind: 'date' },
+      { field: 'status', header: 'ສະຖານະ' },
+      { field: 'lineCount', header: 'ລາຍການ' },
+      { field: 'totalCost', header: 'ມູນຄ່າລວມ' },
     ],
     fetch: reportPurchaseOrders,
   },
   imports: {
-    label: 'Imports',
+    label: 'ການນຳເຂົ້າ',
     columns: [
-      { field: 'importId', header: 'Import #' },
-      { field: 'order.poId', header: 'PO #' },
-      { field: 'importDate', header: 'Date', kind: 'date' },
-      { field: 'lineCount', header: 'Lines' },
-      { field: 'totalQty', header: 'Total qty' },
+      { field: 'importId', header: 'ເລກທີ' },
+      { field: 'order.poId', header: 'ໃບສັ່ງຊື້' },
+      { field: 'importDate', header: 'ວັນທີ', kind: 'date' },
+      { field: 'lineCount', header: 'ລາຍການ' },
+      { field: 'totalQty', header: 'ຈຳນວນລວມ' },
     ],
     fetch: reportImports,
   },
   sales: {
-    label: 'Sales',
+    label: 'ການຂາຍ',
     columns: [
-      { field: 'saleId', header: 'Sale #' },
-      { field: 'customer.name', header: 'Customer' },
-      { field: 'saleDate', header: 'Date', kind: 'date' },
-      { field: 'paymentMethod', header: 'Payment' },
-      { field: 'lineCount', header: 'Lines' },
-      { field: 'total', header: 'Total' },
+      { field: 'saleId', header: 'ເລກທີ' },
+      { field: 'customer.name', header: 'ລູກຄ້າ' },
+      { field: 'saleDate', header: 'ວັນທີ', kind: 'date' },
+      { field: 'paymentMethod', header: 'ການຊຳລະ' },
+      { field: 'lineCount', header: 'ລາຍການ' },
+      { field: 'total', header: 'ລວມ' },
     ],
     fetch: reportSales,
   },
   reservations: {
-    label: 'Reservations',
+    label: 'ການຈອງ',
     columns: [
-      { field: 'resId', header: '#' },
-      { field: 'customer.name', header: 'Customer' },
-      { field: 'resDate', header: 'Date', kind: 'date' },
-      { field: 'status', header: 'Status' },
-      { field: 'deposit', header: 'Deposit' },
-      { field: 'total', header: 'Total' },
-      { field: 'balance', header: 'Balance' },
+      { field: 'resId', header: 'ເລກທີ' },
+      { field: 'customer.name', header: 'ລູກຄ້າ' },
+      { field: 'resDate', header: 'ວັນທີ', kind: 'date' },
+      { field: 'status', header: 'ສະຖານະ' },
+      { field: 'deposit', header: 'ເງິນມັດຈຳ' },
+      { field: 'total', header: 'ລວມ' },
+      { field: 'balance', header: 'ຍອດຄ້າງ' },
     ],
     fetch: reportReservations,
   },
   'best-sellers': {
-    label: 'Best Sellers',
+    label: 'ຂາຍດີທີ່ສຸດ',
     chart: true,
     columns: [
-      { field: 'title', header: 'Book' },
-      { field: 'totalQty', header: 'Qty sold' },
-      { field: 'totalRevenue', header: 'Revenue' },
+      { field: 'title', header: 'ປຶ້ມ' },
+      { field: 'totalQty', header: 'ຈຳນວນທີ່ຂາຍ' },
+      { field: 'totalRevenue', header: 'ລາຍຮັບ' },
     ],
     fetch: reportBestSellers,
   },
@@ -119,7 +119,7 @@ const summaryText = computed(() =>
 );
 const chartData = computed(() => ({
   labels: rows.value.map((r) => r.title),
-  datasets: [{ label: 'Qty sold', data: rows.value.map((r) => r.totalQty), backgroundColor: '#42A5F5' }],
+  datasets: [{ label: 'ຈຳນວນທີ່ຂາຍ', data: rows.value.map((r) => r.totalQty), backgroundColor: '#42A5F5' }],
 }));
 const chartOptions = { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } };
 
@@ -146,14 +146,14 @@ async function run() {
     if (Array.isArray(data)) {
       rows.value = data;
       const totalQty = data.reduce((s: number, r: any) => s + r.totalQty, 0);
-      summary.value = { books: data.length, totalQtySold: totalQty };
+      summary.value = { 'ຈຳນວນປຶ້ມ': data.length, 'ຈຳນວນທີ່ຂາຍລວມ': totalQty };
     } else {
       rows.value = data.rows;
       summary.value = data.summary;
     }
   } catch (e: any) {
-    const m = e?.response?.data?.message ?? e?.message ?? 'Error';
-    toast.add({ severity: 'error', summary: 'Report failed', detail: Array.isArray(m) ? m.join(', ') : m, life: 4000 });
+    const m = e?.response?.data?.message ?? e?.message ?? 'ເກີດຂໍ້ຜິດພາດ';
+    toast.add({ severity: 'error', summary: 'ດຶງລາຍງານບໍ່ສຳເລັດ', detail: Array.isArray(m) ? m.join(', ') : m, life: 4000 });
   } finally {
     loading.value = false;
   }
@@ -164,13 +164,13 @@ onMounted(run);
 
 <template>
   <div>
-    <h2 class="mt-0">Reports</h2>
+    <h2 class="mt-0">ລາຍງານ</h2>
 
     <div class="filters">
       <Select v-model="selected" :options="reportOptions" optionLabel="label" optionValue="value" @change="run" />
-      <DatePicker v-model="fromDate" dateFormat="yy-mm-dd" placeholder="From" showButtonBar />
-      <DatePicker v-model="toDate" dateFormat="yy-mm-dd" placeholder="To" showButtonBar />
-      <Button label="Run" icon="pi pi-search" :loading="loading" @click="run" />
+      <DatePicker v-model="fromDate" dateFormat="yy-mm-dd" placeholder="ຈາກວັນທີ" showButtonBar />
+      <DatePicker v-model="toDate" dateFormat="yy-mm-dd" placeholder="ຫາວັນທີ" showButtonBar />
+      <Button label="ສະແດງ" icon="pi pi-search" :loading="loading" @click="run" />
     </div>
 
     <p v-if="summaryText" class="summary">{{ summaryText }}</p>

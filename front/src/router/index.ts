@@ -18,6 +18,21 @@ const routes: RouteRecordRaw[] = [
     component: () => import('../views/OtpView.vue'),
   },
   {
+    path: '/customer-login',
+    name: 'customer-login',
+    component: () => import('../views/CustomerLoginView.vue'),
+  },
+  {
+    path: '/me',
+    component: () => import('../views/customer/CustomerLayout.vue'),
+    meta: { requiresAuth: true, customerOnly: true },
+    children: [
+      { path: '', name: 'my-account', component: () => import('../views/customer/ShopView.vue') },
+      { path: 'purchases', name: 'my-purchases', component: () => import('../views/customer/PurchasesView.vue') },
+      { path: 'reservations', name: 'my-reservations', component: () => import('../views/customer/ReservationsView.vue') },
+    ],
+  },
+  {
     path: '/',
     component: () => import('../views/MainLayout.vue'),
     meta: { requiresAuth: true },
@@ -72,11 +87,23 @@ export const router = createRouter({
 router.beforeEach((to) => {
   const auth = useAuthStore();
   const requiresAuth = to.matched.some((r) => r.meta.requiresAuth);
+  const customerOnly = to.matched.some((r) => r.meta.customerOnly);
 
+  // Not signed in → send to the appropriate login for the area.
   if (requiresAuth && !auth.isAuthenticated) {
-    return { name: 'login', query: { redirect: to.fullPath } };
+    const name = customerOnly ? 'customer-login' : 'login';
+    return { name, query: { redirect: to.fullPath } };
   }
-  if (to.name === 'login' && auth.isAuthenticated) {
+  // Signed-in users shouldn't sit on a login page.
+  if ((to.name === 'login' || to.name === 'customer-login') && auth.isAuthenticated) {
+    return auth.isCustomer ? { name: 'my-account' } : { name: 'home' };
+  }
+  // Keep customers out of the staff back-office…
+  if (requiresAuth && !customerOnly && auth.isCustomer) {
+    return { name: 'my-account' };
+  }
+  // …and employees out of the customer area.
+  if (customerOnly && auth.isAuthenticated && !auth.isCustomer) {
     return { name: 'home' };
   }
   if (to.meta.adminOnly && !auth.isAdmin) {

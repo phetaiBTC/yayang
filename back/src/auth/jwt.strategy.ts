@@ -3,9 +3,9 @@ import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 
 export interface JwtPayload {
-  sub: number; // empId
+  sub: number; // empId for employees, cusId for customers
   username: string;
-  role: 'admin' | 'staff';
+  role: 'admin' | 'staff' | 'customer';
 }
 
 @Injectable()

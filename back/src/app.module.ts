@@ -10,6 +10,7 @@ import { ImportingModule } from './importing/importing.module';
 import { SellingModule } from './selling/selling.module';
 import { ReservationModule } from './reservation/reservation.module';
 import { ReportingModule } from './reporting/reporting.module';
+import { CustomerModule } from './customer/customer.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 
@@ -25,6 +26,7 @@ import { AppService } from './app.service';
     SellingModule,
     ReservationModule,
     ReportingModule,
+    CustomerModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -4,7 +4,6 @@ import { useRouter, useRoute } from 'vue-router';
 import { useToast } from 'primevue/usetoast';
 import InputOtp from 'primevue/inputotp';
 import Button from 'primevue/button';
-import Message from 'primevue/message';
 import { verifyOtp, resendOtp } from '../api/registration';
 
 const route = useRoute();
@@ -12,7 +11,7 @@ const router = useRouter();
 const toast = useToast();
 
 const phone = String(route.query.phone || '');
-const devOtp = ref(String(route.query.devOtp || ''));
+const email = String(route.query.email || '');
 const code = ref('');
 const loading = ref(false);
 const resending = ref(false);
@@ -23,7 +22,7 @@ onMounted(() => {
 });
 
 function errorDetail(e: any): string {
-  const m = e?.response?.data?.message ?? e?.message ?? 'Unexpected error';
+  const m = e?.response?.data?.message ?? e?.message ?? 'ເກີດຂໍ້ຜິດພາດ';
   return Array.isArray(m) ? m.join(', ') : String(m);
 }
 
@@ -32,10 +31,10 @@ async function verify() {
   loading.value = true;
   try {
     await verifyOtp(phone, code.value);
-    toast.add({ severity: 'success', summary: 'Verified — you can now sign in', life: 3000 });
-    router.push({ name: 'login' });
+    toast.add({ severity: 'success', summary: 'ຢືນຢັນສຳເລັດ — ທ່ານສາມາດເຂົ້າສູ່ລະບົບໄດ້ແລ້ວ', life: 3000 });
+    router.push({ name: 'customer-login', query: { email } });
   } catch (e) {
-    toast.add({ severity: 'error', summary: 'Verification failed', detail: errorDetail(e), life: 4000 });
+    toast.add({ severity: 'error', summary: 'ຢືນຢັນບໍ່ສຳເລັດ', detail: errorDetail(e), life: 4000 });
   } finally {
     loading.value = false;
   }
@@ -44,11 +43,10 @@ async function verify() {
 async function resend() {
   resending.value = true;
   try {
-    const res = await resendOtp(phone);
-    devOtp.value = res.devOtp ?? '';
-    toast.add({ severity: 'info', summary: 'A new code has been sent', life: 3000 });
+    await resendOtp(phone);
+    toast.add({ severity: 'info', summary: 'ໄດ້ສົ່ງລະຫັດໃໝ່ແລ້ວ', life: 3000 });
   } catch (e) {
-    toast.add({ severity: 'warn', summary: 'Could not resend', detail: errorDetail(e), life: 4000 });
+    toast.add({ severity: 'warn', summary: 'ສົ່ງລະຫັດຄືນບໍ່ໄດ້', detail: errorDetail(e), life: 4000 });
   } finally {
     resending.value = false;
   }
@@ -58,15 +56,13 @@ async function resend() {
 <template>
   <main class="auth-wrap">
     <div class="auth-card">
-      <h1 class="auth-title">ຢືນຢັນ OTP / Verify</h1>
-      <p class="auth-sub">Enter the 6-digit code sent for <strong>{{ phone }}</strong>.</p>
-
-      <Message v-if="devOtp" severity="info" class="mb-3">Dev code: <strong>{{ devOtp }}</strong></Message>
+      <h1 class="auth-title">ຢືນຢັນ OTP</h1>
+      <p class="auth-sub">ປ້ອນລະຫັດ 6 ຫຼັກທີ່ສົ່ງໄປຫາອີເມວ <strong>{{ email || phone }}</strong>.</p>
 
       <div class="flex flex-column gap-3 align-items-center">
         <InputOtp v-model="code" :length="6" integerOnly />
         <Button
-          label="Verify"
+          label="ຢືນຢັນ"
           icon="pi pi-check"
           :loading="loading"
           :disabled="code.length !== 6"
@@ -74,7 +70,7 @@ async function resend() {
           @click="verify"
         />
         <Button
-          label="Resend code"
+          label="ສົ່ງລະຫັດຄືນ"
           icon="pi pi-refresh"
           severity="secondary"
           text
@@ -84,7 +80,7 @@ async function resend() {
       </div>
 
       <p class="mt-3">
-        <RouterLink :to="{ name: 'register' }">← Back to register</RouterLink>
+        <RouterLink :to="{ name: 'register' }">← ກັບໄປລົງທະບຽນ</RouterLink>
       </p>
     </div>
   </main>

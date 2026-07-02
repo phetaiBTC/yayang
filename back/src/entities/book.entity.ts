@@ -10,4 +10,5 @@ export class Book {
   @ManyToOne(() => BookType, { fieldName: 'type_id' }) bookType!: BookType;
   @Property({ type: 'decimal', precision: 12, scale: 2 }) price!: string;
   @Property({ default: 0 }) stock = 0;
+  @Property({ length: 500, nullable: true }) image?: string; // cover image URL
 }
